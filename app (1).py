@@ -11,7 +11,12 @@ st.set_page_config(
 st.title("🎬 Movie Recommendation System")
 st.write("Discover movies similar to your favourites!")
 
-movies = pd.read_pickle("movies.pkl")
+import os
+import pandas as pd
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+movies = pd.read_pickle(os.path.join(BASE_DIR, "movies.pkl"))
 ratings_clean = pd.read_pickle("ratings.pkl")
 
 movie_user_matrix = ratings_clean.pivot(
