@@ -1,8 +1,11 @@
 
 import streamlit as st
 import pandas as pd
-import pickle
+import os
+from scipy.sparse import csr_matrix
+from sklearn.neighbors import NearestNeighbors
 
+# Page configuration
 st.set_page_config(
     page_title="Movie Recommender",
     page_icon="🎬"
@@ -11,23 +14,20 @@ st.set_page_config(
 st.title("🎬 Movie Recommendation System")
 st.write("Discover movies similar to your favourites!")
 
-import os
-import pandas as pd
-
+# Load datasets
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 movies = pd.read_pickle(os.path.join(BASE_DIR, "movies.pkl"))
-ratings_clean = pd.read_pickle("ratings.pkl")
+ratings_clean = pd.read_pickle(os.path.join(BASE_DIR, "ratings.pkl"))
 
+# Create movie-user matrix
 movie_user_matrix = ratings_clean.pivot(
     index="MovieID",
     columns="UserID",
     values="Rating"
 ).fillna(0)
 
-from scipy.sparse import csr_matrix
-from sklearn.neighbors import NearestNeighbors
-
+# KNN model
 sparse_matrix = csr_matrix(movie_user_matrix.values)
 
 knn = NearestNeighbors(
@@ -38,7 +38,9 @@ knn = NearestNeighbors(
 
 knn.fit(sparse_matrix)
 
+# Recommendation function
 def recommend(movie_title):
+
     movie_id = movies.loc[
         movies["Title"] == movie_title,
         "MovieID"
@@ -64,6 +66,7 @@ def recommend(movie_title):
     ][["Title", "Genres"]].to_dict("records")
 
 
+# Movie selection
 movie_list = sorted(movies["Title"].unique())
 
 selected_movie = st.selectbox(
@@ -74,8 +77,11 @@ selected_movie = st.selectbox(
 if st.button("Recommend Movies"):
     results = recommend(selected_movie)
 
-    st.subheader("Recommended movies")
+    st.subheader("Recommended Movies")
 
-    for movie in results:
-        st.write("🎥 **" + movie["Title"] + "**")
-        st.caption(movie["Genres"])
+    if results:
+        for movie in results:
+            st.write("🎥 **" + movie["Title"] + "**")
+            st.caption(movie["Genres"])
+    else:
+        st.warning("No recommendations found.")
